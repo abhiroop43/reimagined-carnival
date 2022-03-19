@@ -1,0 +1,15 @@
+# run a local instance of mongodb
+
+version: "3.8"
+services:
+  mongodb:
+    image: mongo
+    container_name: mongodb-dev
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - $HOME/Projects/database/mongodb-dev:/data/db
+    ports:
+      - "27017:27017"
+    restart: unless-stopped
