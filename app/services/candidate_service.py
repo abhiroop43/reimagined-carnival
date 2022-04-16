@@ -1,11 +1,11 @@
 import datetime
-from collections import namedtuple
 
 import bson
 import motor.motor_asyncio
 from fastapi.encoders import jsonable_encoder
 
 from app.dto.candidate_model import CandidateModel, UpdateCandidateModel
+from app.infrastructure.custom_exceptions import NotFoundException
 
 
 class CandidateService:
@@ -15,14 +15,16 @@ class CandidateService:
         self.db = client.recruitment
 
     async def get_all_candidates(self):
-        candidates = await self.db["candidates"].find().to_list(1000)
+        candidates = await self.db["candidates"].find({"active": True}).to_list(1000)
         return candidates
 
     async def get_candidate_details(self, candidate_id):
-        if (
-                candidate := await self.db["candidates"].find_one({"_id": candidate_id})) is not None:
+
+        if (candidate := await self.db["candidates"].find_one(
+                {"$and": [{"_id": candidate_id}, {"active": True}]})) is not None:
             return candidate
-        return None
+        else:
+            raise NotFoundException(f"Candidate with Id {candidate_id} was not found or not updated")
 
     async def create_candidate(self, candidate: CandidateModel):
         candidate.active = True
@@ -30,13 +32,11 @@ class CandidateService:
         # TODO: to be replaced by logged in user after Login implementation
         candidate.created_by = "admin"
         candidate.id = bson.objectid.ObjectId()
-        # candidate = {k: v for k, v in candidate.dict().items() if v is not None}
-        # print(candidate)
+
         encoded_data = jsonable_encoder(candidate)
         new_candidate = await self.db["candidates"].insert_one(encoded_data)
         created_candidate = await self.db["candidates"].find_one({"_id": new_candidate.inserted_id})
 
-        # candidate_response = CandidateDto(**created_candidate.dict(), id=new_candidate.inserted_id)
         return jsonable_encoder(created_candidate)
 
     async def update_candidate(self, candidate_id: str, candidate: UpdateCandidateModel):
@@ -55,7 +55,7 @@ class CandidateService:
         if (existing_candidate := await self.db["candidates"].find_one({"_id": candidate_id})) is not None:
             return existing_candidate
 
-        raise Exception(f"Candidate with Id {candidate_id} was not found or not updated")
+        raise NotFoundException(f"Candidate with Id {candidate_id} was not found or not updated")
 
     async def delete_candidate(self, candidate_id: str):
         if (await self.db["candidates"].find_one({"_id": candidate_id}, {"_id": 0})) is not None:
@@ -64,4 +64,4 @@ class CandidateService:
             if update_result.modified_count == 1:
                 return True
 
-        raise Exception(f"Candidate with Id {candidate_id} was not found or not updated")
+        raise NotFoundException(f"Candidate with Id {candidate_id} was not found or not deleted")
