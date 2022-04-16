@@ -28,7 +28,7 @@ async def list_candidates():
     "/candidate/{candidate_id}", response_description="Get a single candidate details", response_model=CandidateModel
 )
 async def show_candidate(candidate_id: str):
-    candidate = candidate_service.get_candidate_details(candidate_id)
+    candidate = await candidate_service.get_candidate_details(candidate_id)
     if candidate is not None:
         return candidate
 

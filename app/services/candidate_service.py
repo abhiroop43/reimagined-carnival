@@ -1,5 +1,7 @@
+import datetime
+
+import bson
 import motor.motor_asyncio
-from bson import ObjectId
 from fastapi.encoders import jsonable_encoder
 
 from app.dto.candidate_model import CandidateModel, UpdateCandidateModel
@@ -16,17 +18,31 @@ class CandidateService:
         return candidates
 
     async def get_candidate_details(self, candidate_id):
-        if (candidate := await self.db["candidates"].find_one({"_id": candidate_id})) is not None:
+        if (
+                candidate := await self.db["candidates"].find_one({"_id": candidate_id})) is not None:
             return candidate
         return None
 
     async def create_candidate(self, candidate: CandidateModel):
+        candidate.active = True
+        candidate.created_on = datetime.datetime.now()
+        # TODO: to be replaced by logged in user after Login implementation
+        candidate.created_by = "admin"
+        candidate.id = bson.objectid.ObjectId()
+        # candidate = {k: v for k, v in candidate.dict().items() if v is not None}
+        # print(candidate)
         encoded_data = jsonable_encoder(candidate)
         new_candidate = await self.db["candidates"].insert_one(encoded_data)
         created_candidate = await self.db["candidates"].find_one({"_id": new_candidate.inserted_id})
-        return created_candidate
+
+        # candidate_response = CandidateDto(**created_candidate.dict(), id=new_candidate.inserted_id)
+        return jsonable_encoder(created_candidate)
 
     async def update_candidate(self, candidate_id: str, candidate: UpdateCandidateModel):
+        candidate.active = True
+        candidate.updated_on = datetime.datetime.now()
+        # TODO: to be replaced by logged in user after Login implementation
+        candidate.updated_by = "admin"
 
         encoded_data = jsonable_encoder(candidate)
         update_result = await self.db["candidates"].update_one({"_id": candidate_id}, {"$set": encoded_data})
@@ -35,7 +51,7 @@ class CandidateService:
             if (updated_candidate := await self.db["candidates"].find_one({"_id": candidate_id})) is not None:
                 return updated_candidate
 
-        if (existing_candidate := await self.db["students"].find_one({"_id": candidate_id})) is not None:
+        if (existing_candidate := await self.db["candidates"].find_one({"_id": candidate_id})) is not None:
             return existing_candidate
 
         raise Exception(f"Candidate with Id {candidate_id} was not found or not updated")
