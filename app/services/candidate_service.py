@@ -1,4 +1,5 @@
 import datetime
+from collections import namedtuple
 
 import bson
 import motor.motor_asyncio
@@ -53,5 +54,14 @@ class CandidateService:
 
         if (existing_candidate := await self.db["candidates"].find_one({"_id": candidate_id})) is not None:
             return existing_candidate
+
+        raise Exception(f"Candidate with Id {candidate_id} was not found or not updated")
+
+    async def delete_candidate(self, candidate_id: str):
+        if (await self.db["candidates"].find_one({"_id": candidate_id}, {"_id": 0})) is not None:
+            update_result = await self.db["candidates"].update_one({"_id": candidate_id}, {"$set": {"active": False}})
+
+            if update_result.modified_count == 1:
+                return True
 
         raise Exception(f"Candidate with Id {candidate_id} was not found or not updated")

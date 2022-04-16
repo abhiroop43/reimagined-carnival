@@ -45,3 +45,14 @@ async def create_candidate(candidate: CandidateModel = Body(...)):
 async def update_candidate(candidate_id: str, candidate: UpdateCandidateModel = Body(...)):
     return JSONResponse(status_code=status.HTTP_200_OK,
                         content=await candidate_service.update_candidate(candidate_id, candidate))
+
+
+@app.delete('/candidate/{candidate_id}', response_description="Delete a candidate")
+async def delete_candidate(candidate_id: str):
+    candidate_deleted = await candidate_service.delete_candidate(candidate_id)
+
+    if candidate_deleted:
+        return JSONResponse(status_code=status.HTTP_204_NO_CONTENT)
+
+    return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Failed to delete record. It might not exist "
+                                                                         "or might already have been deleted.")

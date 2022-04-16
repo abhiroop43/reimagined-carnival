@@ -1,5 +1,5 @@
 import datetime
-from typing import Optional
+from typing import Optional, Any
 
 from bson import ObjectId
 from pydantic import BaseModel, Field, EmailStr
@@ -32,6 +32,14 @@ class CandidateModel(BaseModel):
     created_by: Optional[str] = Field()
     updated_on: Optional[datetime.datetime] = Field()
     updated_by: Optional[str] = Field()
+
+    # def __init__(self, d, **data: Any):
+    #     super().__init__(**data)
+    #     for a, b in d.items():
+    #         if isinstance(b, (list, tuple)):
+    #             setattr(self, a, [obj(x) if isinstance(x, dict) else x for x in b])
+    #         else:
+    #             setattr(self, a, obj(b) if isinstance(b, dict) else b)
 
     class Config:
         allow_population_by_field_name = True
