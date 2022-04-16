@@ -1,19 +1,19 @@
 from typing import List
-import motor.motor_asyncio
+
 from fastapi import FastAPI, HTTPException
-from fastapi.encoders import jsonable_encoder
 from fastapi.params import Body
 from starlette import status
 from starlette.responses import JSONResponse
 
-from app.dto.candidate_model import CandidateModel
+from app.dto.candidate_model import CandidateModel, UpdateCandidateModel
 from app.services.candidate_service import CandidateService
 
 app = FastAPI()
 candidate_service = CandidateService()
 
-client = motor.motor_asyncio.AsyncIOMotorClient("mongodb://localhost:27017")
-db = client.recruitment
+
+# client = motor.motor_asyncio.AsyncIOMotorClient("mongodb://localhost:27017")
+# db = client.recruitment
 
 
 @app.get(
@@ -39,3 +39,9 @@ async def show_candidate(candidate_id: str):
 async def create_candidate(candidate: CandidateModel = Body(...)):
     return JSONResponse(status_code=status.HTTP_201_CREATED,
                         content=await candidate_service.create_candidate(candidate))
+
+
+@app.put('/candidate/{candidate_id}', response_description="Update a candidate", response_model=CandidateModel)
+async def update_candidate(candidate_id: str, candidate: UpdateCandidateModel = Body(...)):
+    return JSONResponse(status_code=status.HTTP_200_OK,
+                        content=await candidate_service.update_candidate(candidate_id, candidate))
