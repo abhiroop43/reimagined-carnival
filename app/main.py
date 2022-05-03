@@ -2,6 +2,7 @@ from typing import List
 
 from fastapi import FastAPI
 from fastapi.encoders import jsonable_encoder
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.params import Body
 from starlette import status
 from starlette.responses import JSONResponse
@@ -13,6 +14,15 @@ from app.services.candidate_service import CandidateService
 
 app = FastAPI()
 candidate_service = CandidateService()
+
+# Set CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get(
